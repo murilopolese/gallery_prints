@@ -6,13 +6,20 @@ const getName = require('./source/util/getname.js')
 const Index = require('./source/templates/index.js')
 const Single = require('./source/templates/single.js')
 
+const html = require('js-beautify').html
+const sharp = require('sharp')
 
 let files = fs.readdirSync('./source/media')
 files = files.filter(isFile)
 
 // COPY FILES TO WWW FOLDER
 fs.mkdirSync(`./www/media`, { recursive: true })
-files.forEach((file, i) => {
+files.forEach(async (file, i) => {
+  // THUMBNAIL
+  await sharp(`./source/media/${file}`)
+    .withMetadata()
+    .resize(270*2)
+    .toFile(`./www/media/thumb_${file}`)
   fs.copyFileSync(
     `./source/media/${file}`,
     `./www/media/${file}`
@@ -26,10 +33,10 @@ fs.copyFileSync(
 )
 
 // CREATE INDEX
-fs.writeFileSync('./www/index.html', Index(files))
+fs.writeFileSync('./www/index.html', html(Index(files)))
 // CREATE ONE PAGE FOR EACH FILE
 files.forEach((file, i) => {
   const folderName = getName(file)
   fs.mkdirSync(`./www/p/${folderName}`, { recursive: true })
-  fs.writeFileSync(`./www/p/${folderName}/index.html`, Single(file, files))
+  fs.writeFileSync(`./www/p/${folderName}/index.html`, html(Single(file, files)))
 })

@@ -16,7 +16,7 @@ function Item(file) {
   return `
     <li>
       <a href="${rootUrl}p/${folderName}">
-        <img src="${rootUrl}media/${file}" alt="${folderName}" />
+        <img src="${rootUrl}media/thumb_${file}" alt="${folderName}" />
         ${folderName}
       </a>
     </li>

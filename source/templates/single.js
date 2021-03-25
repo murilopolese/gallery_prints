@@ -11,13 +11,13 @@ function Single(file, files) {
   const prevFile = files[(files.length + (i-1)) % files.length]
   const content = `
     <div class="navigation">
-      <a href="${rootUrl}p/${getName(prevFile)}"><</a>
+      <a href="${rootUrl}p/${getName(prevFile)}"> < </a>
       <div class="single-display">
         <a href="${rootUrl}media/${file}" target="_blank">
           <img src="${rootUrl}media/${file}" alt="${getName(file)}" />
         </a>
       </div>
-      <a href="${rootUrl}p/${getName(nextFile)}">></a>
+      <a href="${rootUrl}p/${getName(nextFile)}"> > </a>
     </div>
     <h2>${file}</h2>
     ${Index(files)}
