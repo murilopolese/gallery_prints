@@ -1,0 +1,1 @@
+aws s3 sync ./www s3://prints.bananabanana.me --exclude '.*' --acl public-read
