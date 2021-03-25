@@ -1,24 +1,39 @@
 #!/Users/murilopolese/.nvm/versions/node/v12.16.3/bin/node
 
+// NODE MODULES
 const fs = require('fs')
+const html = require('js-beautify').html
+const sharp = require('sharp')
+const RSS = require('rss')
+
+// PROJECT UTILITY
 const isFile = require('./source/util/isfile.js')
 const getName = require('./source/util/getname.js')
+const rssmetadata = require('./source/util/rssmetadata.js')
+const getFileDate = require('./source/util/getfiledate.js')
+
+// TEMPLATES
 const Index = require('./source/templates/index.js')
 const Single = require('./source/templates/single.js')
 
-const html = require('js-beautify').html
-const sharp = require('sharp')
-
+// SOURCE CONTENT FILES FROM FOLDER
 let files = fs.readdirSync('./source/media')
 files = files.filter(isFile)
+
+// SORT FILES BY CREATION DATE: NEW FIRST
+files.sort(function(fileA, fileB) {
+  let dateA = getFileDate(`./source/media/${fileA}`)
+  let dateB = getFileDate(`./source/media/${fileB}`)
+  return dateB - dateA
+})
 
 // COPY FILES TO WWW FOLDER
 fs.mkdirSync(`./www/media`, { recursive: true })
 files.forEach(async (file, i) => {
   // THUMBNAIL
   await sharp(`./source/media/${file}`)
-    .withMetadata()
     .resize(270*2)
+    .withMetadata()
     .toFile(`./www/media/thumb_${file}`)
   fs.copyFileSync(
     `./source/media/${file}`,
@@ -32,11 +47,30 @@ fs.copyFileSync(
   `./www/theme.css`
 )
 
+// CREATE RSS FEED
+const feed = new RSS(rssmetadata)
+
 // CREATE INDEX
 fs.writeFileSync('./www/index.html', html(Index(files)))
+
 // CREATE ONE PAGE FOR EACH FILE
 files.forEach((file, i) => {
+  const stats = fs.statSync(`./source/media/${file}`)
   const folderName = getName(file)
+  // CREATE FOLDER AND PLACE HTML FOR EACH ENTRY
   fs.mkdirSync(`./www/p/${folderName}`, { recursive: true })
   fs.writeFileSync(`./www/p/${folderName}/index.html`, html(Single(file, files)))
+  // CREATE RSS FEED ENTRY
+  feed.item({
+    title:  folderName,
+    description: `<img width="100%" src="http://prints.bananabanana.me/media/${file}" alt="${folderName}" />`,
+    url: `http://prints.bananabanana.me/p/${folderName}`, // link to the item
+    guid: folderName, // optional - defaults to url
+    categories: rssmetadata.categories, // optional - array of item categories
+    author: 'Murilo', // optional - defaults to feed author property
+    date: stats.birthtime, // any format that js Date can parse.
+  })
 })
+
+// CREATE RSS XML
+fs.writeFileSync('./www/rss.xml', feed.xml())
